@@ -1,0 +1,84 @@
+@import "examples/softmax_mcnn/mt19937ar.myc"
+
+// math.h
+function sqrt(:x f64) f64 external;
+function log (:x f64) f64 external;
+function fabs(:x f64) f64 external;
+
+struct NormalDistribution {
+	:mt MT;
+	:saved f64;
+	:saved_available bool;
+}
+
+function init_normal(:s uint32) NormalDistribution {
+	NormalDistribution {
+		init_genrand(s),
+		0.0,
+		false,
+	}
+}
+
+function init_normal_by_array(:init_key []uint32) NormalDistribution {
+	NormalDistribution {
+		init_by_array(init_key),
+		0.0,
+		false,
+	}
+}
+
+function normal(:nd *NormalDistribution, :stddev f64, :mean f64) f64 {
+	if  (*nd).saved_available {
+		(*nd).saved_available = false;
+		return (*nd).saved * stddev + mean;
+	} 
+
+	:x  f64;
+	:y  f64;
+	:r2 f64;
+
+	while r2 > 1.0 || r2 == 0.0 {
+		x = 2.0 * genrand_real1(&(*nd).mt) - 1.0;
+		y = 2.0 * genrand_real1(&(*nd).mt) - 1.0;
+		r2 = x * x + y * y;
+	}
+
+	:mult f64 = sqrt((-2.0 * log(r2)) / r2);
+	(*nd).saved = x * mult;
+	(*nd).saved_available = true;
+	return y * mult * stddev + mean;
+}
+
+@define PLOT_POINTS  200
+@define PLOT_MAX     1.0
+@define PLOT_MIN    -1.0
+@define PRINT_SCALE  1
+
+function test() {
+	:nd NormalDistribution = init_normal_by_array(
+		[4]uint32 {
+			0x123,		
+			0x234,
+			0x345,
+			0x456,
+		}
+	); 
+
+	:histogram [PLOT_POINTS]int32;	
+	
+	for(:i int32 = 0; i < 30000; i++) {
+		:z f64 = normal(&nd, 0.5, 0.0);
+		if z <= [f64]PLOT_MAX && z >= PLOT_MIN {
+			:_j f64 = ((z + fabs(PLOT_MIN)) / (PLOT_MAX + fabs(PLOT_MIN)));
+			:j  f64 =  _j * ([f64]PLOT_POINTS - 1.0);
+			histogram[[uint64]j] += 1;
+		}
+	}
+
+	for(:i int32 = 0; i < PLOT_POINTS; i++) {
+		for(:j int32 = 0; j < histogram[i] / PRINT_SCALE; j++) {
+			putchar('*');
+		}
+		putchar('\n');
+	}
+}

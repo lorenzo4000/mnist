@@ -1,0 +1,72 @@
+@import "examples/softmax_mcnn/model.myc"
+
+function main() {
+	:images [][28][28]uint8 = read_dataset_image("./examples/softmax_mcnn/test_set/t10k-images-idx3-ubyte");
+	:labels []     uint8 = read_dataset_label("./examples/softmax_mcnn/test_set/t10k-labels-idx1-ubyte");
+	
+	printf("%llx\n".data, images.len);
+
+	// cast image set to f32 range [-1.0, 1.0]
+	:image_set [][784]f32 = allocate(28*28*images.len*4);
+	for(:i uint32 = 0; i < [uint32]image_set.len; i++) {
+		for(:r uint32 = 0; r < 28; r++) {
+			for(:c uint32 = 0; c < 28; c++) {
+				:pixel uint8 = images[i][r][c];
+				image_set[i][r * 28 + c] = [f32]pixel / 127.5 - 1.0;
+			}
+		}
+	}
+	
+	// cast label set to binary vector (still f32 because math)
+	:label_set [][10]f32 = allocate(labels.len*4*10);
+	for(:i uint32 = 0; i < [uint32]label_set.len; i++) {
+		:answer uint8 = labels[i];
+		label_set[i][answer] = 1.0;	
+	}
+
+	
+	:neural_network [][]Neuron = nn();
+	printf("neural_network.len: %d\n".data, neural_network.len);
+
+	read_model("examples/softmax_mcnn/saved_models/model_checkpoint.bin", neural_network);
+		
+	:f_out ForwardOut = ForwardOut{
+		allocate(2 * 16),
+		allocate(2 * 16),
+	};
+
+	f_out.a[0] = allocate(800 * 4);
+	f_out.a[1] = allocate(10 * 4);
+	f_out.z[0] = allocate(800 * 4);
+	f_out.z[1] = allocate(10 * 4);
+
+	:cost f32;
+	:error f32;
+	for(:example uint32 = 0; example < [uint32]image_set.len; example++) {
+		:i uint32 = example; 
+
+		printf("example #%llu\n".data, i);
+		forward(neural_network, image_set[i], f_out);
+		
+		:probability_distribution []f32 = f_out.a[1];
+		for(:n int32 = 0; n < [int32]probability_distribution.len; n++) {
+			printf("probability[%u]: %f; label[%u]: %f\n".data, n, [f64]probability_distribution[n], n, [f64]label_set[i][n]);
+		}
+		:l f32 = loss(probability_distribution, label_set[i]);
+		printf("loss: %f\n".data, [f64]l);
+		cost += l;
+		
+		:prediction uint64 = max(probability_distribution);
+		printf("prediction: %llu\n".data, prediction);	
+		if [uint8]prediction != labels[i] {
+			error += 1.0;
+		}
+	}
+
+	cost /= [f32]image_set.len;
+	printf("cost: %f\n".data, [f64]cost);
+	
+	error /= [f32]image_set.len;
+	error *= 100.0;
+	printf("error rate: %f%\n".data, [f64]error);
+}

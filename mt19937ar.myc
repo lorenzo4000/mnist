@@ -1,0 +1,140 @@
+/* Period parameters */  
+@define N 624
+@define M 397
+@define MATRIX_A 0x9908b0df 
+@define UPPER_MASK 0x80000000
+@define LOWER_MASK 0x7fffffff 
+
+@define DEFAULT_SEED 5489
+
+
+struct MT {
+	:state [N]uint32;
+	:index    uint32;
+}
+
+function init_genrand(:s uint32) MT {
+	:mt MT;
+	mt.state[0] = s & 0xffffffff;
+
+	mt.index = 1;
+	for(; mt.index < N; mt.index++) {
+		mt.state[mt.index] = 
+	    (1812433253 * (mt.state[mt.index-1] ^ (mt.state[mt.index-1] >> 30)) + mt.index); 
+	}
+
+	return mt;
+}
+
+function init_by_array(:init_key []uint32) MT {
+	:i uint32;
+	:j uint32;
+	:k uint32;
+
+	:mt MT = init_genrand(19650218);
+
+	i = 1;
+	j = 0;
+	k = if N > init_key.len {
+		N
+	} else {
+		init_key.len
+	};
+
+	for(; k > 0; k--) {
+		mt.state[i] = (mt.state[i] ^ ((mt.state[i-1] ^ (mt.state[i-1] >> 30)) * 1664525)) + init_key[j] + j;
+		i++;
+		j++;
+
+		if i >= N {
+			mt.state[0] = mt.state[N-1];
+			i = 1;
+		}
+		if j >= [uint32]init_key.len {
+			j = 0;
+		}
+	}
+
+	k = N - 1;
+	for(; k > 0; k--) {
+		mt.state[i] = (mt.state[i] ^ ((mt.state[i-1] ^ (mt.state[i-1] >> 30)) * 1566083941)) - i;
+		i++;
+		
+		if i >= N {
+			mt.state[0] = mt.state[N-1];
+			i = 1;
+		}
+	}
+
+	mt.state[0] = 0x80000000;
+	mt
+}
+
+function genrand_int32(:mt *MT) uint32 {
+	:y uint32;
+	:mag01 [2]uint32 = [2]uint32{0, MATRIX_A};
+
+	if mt == null {
+		:_mt MT = init_genrand(DEFAULT_SEED);
+		mt = &_mt;
+	}
+			
+	if (*mt).index >= N {
+		:kk int32;
+	
+		for(; kk < N - M; kk++) {
+			y = ((*mt).state[kk] & UPPER_MASK) | ((*mt).state[kk+1] & LOWER_MASK);
+			(*mt).state[kk] = (*mt).state[kk + M] ^ (y >> 1) ^ mag01[y & 1];
+		}
+        for (; kk < N - 1; kk++) {
+            y = ((*mt).state[kk] & UPPER_MASK) | ((*mt).state[kk+1] & LOWER_MASK);
+            (*mt).state[kk] = (*mt).state[kk + (M-N)] ^ (y >> 1) ^ mag01[y & 1];
+        }
+        
+		y = ((*mt).state[N-1] & UPPER_MASK) | ((*mt).state[0] & LOWER_MASK);
+        (*mt).state[N-1] = (*mt).state[M-1] ^ (y >> 1) ^ mag01[y & 1];
+		
+		(*mt).index = 0;
+	}
+
+    y = (*mt).state[(*mt).index];
+	(*mt).index++;
+
+    y ^= (y >> 11);
+    y ^= (y << 7) & 0x9d2c5680;
+    y ^= (y << 15) & 0xefc60000;
+    y ^= (y >> 18);
+
+	y
+}
+
+// generates a random number on [0,0x7fffffff]-interval
+function genrand_int31(:mt *MT) uint32 {
+    genrand_int32(mt) >> 1
+}
+
+// generates a random number on [0,1]-real-interval 
+function genrand_real1(:mt *MT) f64 {
+    // divided by 2^32-1
+    [f64]genrand_int32(mt) * (1.0 / 4294967295.0)
+}
+
+// generates a random number on [0,1)-real-interval 
+function genrand_real2(:mt *MT) f64 {
+    // divided by 2^32
+    [f64]genrand_int32(mt) * (1.0 / 4294967296.0)
+}
+
+// generates a random number on (0,1)-real-interval
+function genrand_real3(:mt *MT) f64 { 
+    // divided by 2^32
+    ([f64]genrand_int32(mt) + 0.5) * (1.0 / 4294967296.0)
+}
+
+// generates a random number on [0,1) with 53-bit resolution
+function genrand_res53(:mt *MT) f64 { 
+    :a uint32 = genrand_int32(mt) >> 5;
+	:b uint32 = genrand_int32(mt) >> 6; 
+    ([f64]a * 67108864.0 + [f64]b) * (1.0 / 9007199254740992.0)
+} 
+
