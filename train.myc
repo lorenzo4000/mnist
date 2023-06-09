@@ -1,88 +1,4 @@
 @import "model.myc"
-// *** raylib ***
-
-//
-// ** structs
-
-// Color, 4 components, R8G8B8A8 (32bit)
-// typedef struct Color {
-//    unsigned char r;        // Color red value
-//    unsigned char g;        // Color green value
-//    unsigned char b;        // Color blue value
-//    unsigned char a;        // Color alpha value
-// Color;
-struct Color {
-	:r uint8;
-	:g uint8;
-	:b uint8;
-	:a uint8;
-}
-
-//
-// ** Window-related functions
-
-// RLAPI void InitWindow(int width, int height, const char *title);  // Initialize window and OpenGL context
-function InitWindow(:width int32, :height int32, :title *uint8) external;
-
-// RLAPI bool WindowShouldClose(void);                               // Check if KEY_ESCAPE pressed or Close icon pressed
-function WindowShouldClose() bool external;
-
-// RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context
-function CloseWindow() external;
-
-// ** Drawing-related functions
-// RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
-function ClearBackground(:color Color) external;
-
-// RLAPI void BeginDrawing(void);                                    // Setup canvas (framebuffer) to start drawing
-function BeginDrawing() external;
-
-// RLAPI void EndDrawing(void);                                      // End canvas drawing and swap buffers (double buffering)
-function EndDrawing() external;
-
-//
-// ** Basic shapes drawing functions
-
-// RLAPI void DrawRectangle(int posX, int posY, int width, int height, Color color);                        // Draw a color-filled rectangle
-function DrawRectangle(:poxX int32, :posY int32, :width int32, :height int32, :color Color) external;
-
-// RLAPI void DrawRectangleLines(int posX, int posY, int width, int height, Color color);                   // Draw rectangle outline
-function DrawRectangleLines(:poxX int32, :posY int32, :width int32, :height int32, :color Color) external;
-
-//
-// ** Input-related functions: mouse
-
-// RLAPI bool IsMouseButtonPressed(int button);                  // Check if a mouse button has been pressed once
-function IsMouseButtonPressed(:button int32) bool external;
-
-// RLAPI bool IsMouseButtonDown(int button);                     // Check if a mouse button is being pressed
-function IsMouseButtonDown(:button int32) bool external;
-
-// RLAPI bool IsMouseButtonReleased(int button);                 // Check if a mouse button has been released once
-function IsMouseButtonReleased(:button int32) bool external;
-
-// RLAPI bool IsMouseButtonUp(int button);                       // Check if a mouse button is NOT being pressed
-function IsMouseButtonUp(:button int32) bool external;
-
-// RLAPI int GetMouseX(void);                                    // Get mouse position X
-function GetMouseX() int32 external;
-
-// RLAPI int GetMouseY(void);                                    // Get mouse position Y
-function GetMouseY() int32 external;
-
-//
-// ** Input-related functions: keyboard
-// RLAPI bool IsKeyPressed(int key);                             // Check if a key has been pressed once
-function IsKeyPressed(:key int32) bool external;
-
-// RLAPI bool IsKeyDown(int key);                                // Check if a key is being pressed
-function IsKeyDown(:key int32) bool external;
-
-// RLAPI bool IsKeyReleased(int key);                            // Check if a key has been released once
-function IsKeyReleased(:key int32) bool external;
-
-// RLAPI bool IsKeyUp(int key);                                  // Check if a key is NOT being pressed
-function IsKeyUp(:key int32) bool external;
 
 // distort entire image set
 function distort_set(:image_set [][784]f32, :out [][784]f32, :nd *NormalDistribution) {
@@ -109,8 +25,8 @@ function distort_set(:image_set [][784]f32, :out [][784]f32, :nd *NormalDistribu
 }
 
 function main() {
-	:images [][28][28]uint8 = read_dataset_image("./examples/softmax_mcnn/training_set/train-images-idx3-ubyte");
-	:labels []     uint8 = read_dataset_label("./examples/softmax_mcnn/training_set/train-labels-idx1-ubyte");
+	:images [][28][28]uint8 = read_dataset_image("training_set/train-images-idx3-ubyte");
+	:labels []     uint8 = read_dataset_label("training_set/train-labels-idx1-ubyte");
 	
 	printf("%llx\n".data, images.len);
 
@@ -202,99 +118,6 @@ function main() {
 		epoch++;
 
 		distort_set(image_set, distorted_image_set, &nd);
-
-		// :PIXEL_SCALE int32 = 20;
-
-		// :WIDTH int32 = 28;
-		// :HEIGHT int32 = 28;
-		// :image [28][28]f32;
-		// :i int32 = 0;
-		// InitWindow(WIDTH * PIXEL_SCALE, HEIGHT * PIXEL_SCALE, "MNIST!".data);
-		// while !WindowShouldClose()  {
-		// 	// :mouse_x int32 = GetMouseX();
-		// 	// :mouse_y int32 = GetMouseY();
-
-		// 	// if mouse_x < WIDTH  * PIXEL_SCALE  &&
-		// 	//    mouse_y < HEIGHT * PIXEL_SCALE &&
-		// 	//    mouse_x >= 0 &&
-		// 	//    mouse_y >= 0 {
-		// 	// 	if IsMouseButtonDown(0) {
-		// 	// 		:r int32 = mouse_y / PIXEL_SCALE;
-		// 	// 		:c int32 = mouse_x / PIXEL_SCALE;
-
-		// 	// 		image = apply_brush(image, brush, c, r);
-		// 	// 	}
-		// 	// }
-
-		// 	// if IsKeyPressed(257) {
-		// 	// 	// ** run model
-		// 	// 	:image_input [784]f32;
-		// 	// 	for(:r int32 = 0; r < HEIGHT; r++) {
-		// 	// 		for(:c int32 = 0; c < WIDTH; c++) {
-		// 	// 			image_input[r * WIDTH + c] = image[r][c];
-		// 	// 		}
-		// 	// 	}
-		// 	// 		
-		// 	// 	forward(neural_network, image_input, f_out);
-		// 	// 	:probability_distribution []f32 = f_out.a[1];
-		// 	// 
-		// 	// 	for(:n int32 = 0; n < [int32]probability_distribution.len; n++) {
-		// 	// 		printf("probability[%u]: %f\n".data, n, [f64]probability_distribution[n]);
-		// 	// 	}
-
-		// 	// 	printf("prediction: %u\n".data, max(probability_distribution));	
-
-
-		// 	// 	// clear image
-		// 	// 	for(:r int32 = 0; r < HEIGHT; r++) {
-		// 	// 		for(:c int32 = 0; c < WIDTH; c++) {
-		// 	// 			image[r][c] = 0.0;
-		// 	// 		}
-		// 	// 	}
-		// 	// }
-
-		// 	if IsKeyPressed(32) { // space
-		// 		// next image
-		// 		i++;
-		// 		for(:r uint32 = 0; r < 28; r++) {
-		// 			for(:c uint32 = 0; c < 28; c++) {
-		// 				image[r][c] = distorted_image_set[i][r * 28 + c];
-		// 			}
-		// 		}
-		// 	}
-
-		// 	BeginDrawing();
-		// 		ClearBackground(Color{
-		// 			0xFF,
-		// 			0xFF,
-		// 			0xFF,
-		// 			0xFF,
-		// 		});
-		// 		
-		// 		for(:r int32 = 0; r < HEIGHT; r++) {
-		// 			for(:c int32 = 0; c < WIDTH; c++) {
-		// 				:pixel uint8= [uint8]((image[r][c] + 1.0) * 127.5);
-		// 				DrawRectangle(c * PIXEL_SCALE, r * PIXEL_SCALE, PIXEL_SCALE, PIXEL_SCALE, Color{
-		// 					pixel,
-		// 					pixel,
-		// 					pixel,
-		// 					0xFF,
-		// 				});
-		// 				
-		// 				// grid
-		// 				DrawRectangleLines(c * PIXEL_SCALE, r * PIXEL_SCALE, PIXEL_SCALE, PIXEL_SCALE, Color{
-		// 					0xFF, 
-		// 					0x00, 
-		// 					0x00, 
-		// 					0x55,
-		// 				});
-		// 			}
-		// 		}
-
-		// 	EndDrawing();
-		// }
-
-		// CloseWindow();
 
 		:cost  f32 = 0.0;
 		:error f32 = 0.0;

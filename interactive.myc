@@ -130,20 +130,6 @@ function main() {
 	f_out.z[0] = allocate(800 * 4);
 	f_out.z[1] = allocate(10 * 4);
 	
-	:images [][28][28]uint8 = read_dataset_image("./examples/softmax_mcnn/training_set/train-images-idx3-ubyte");
-	
-	// cast image set to f32 range [-1.0, 1.0]
-	:image_set [][28][28]f32 = allocate(28*28*images.len*4);
-	for(:i uint32 = 0; i < [uint32]image_set.len; i++) {
-		for(:r uint32 = 0; r < 28; r++) {
-			for(:c uint32 = 0; c < 28; c++) {
-				:pixel uint8 = images[i][r][c];
-				image_set[i][r][c] = [f32]pixel / 127.5 - 1.0;
-			}
-		}
-	}
-
-
 	:PIXEL_SCALE int32 = 20;
 
 	:WIDTH int32 = 28;
@@ -163,12 +149,6 @@ function main() {
 		[5]f32{0.0, 0.1,  0.01, 0.1,  0.0},
 		[5]f32{0.0, 0.0,   0.0,  0.0,   0.0},
 	};
-
-	:i int32 = 0;
-	:nd NormalDistribution = init_normal(time(null));
-
-	printf("%f".data, gaussian2d(1.0, 3.0, 4.0));
-
 
 	InitWindow(WIDTH * PIXEL_SCALE, HEIGHT * PIXEL_SCALE, "MNIST!".data);
 	while !WindowShouldClose()  {
@@ -213,17 +193,6 @@ function main() {
 				}
 			}
 		}
-
-		//if IsKeyPressed(257) { // enter
-		//	// run distortion
-		//	image = elastic_distortion(image_set[i], &nd, 8.0, 5.0);
-		//}
-		//
-		//if IsKeyPressed(32) { // space
-		//	// next image
-		//	i++;
-		//	image = image_set[i];
-		//}
 
 		BeginDrawing();
 			ClearBackground(Color{
