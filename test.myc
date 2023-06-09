@@ -1,4 +1,4 @@
-@import "examples/softmax_mcnn/model.myc"
+@import "model.myc"
 
 function main() {
 	:images [][28][28]uint8 = read_dataset_image("./examples/softmax_mcnn/test_set/t10k-images-idx3-ubyte");
@@ -28,7 +28,7 @@ function main() {
 	:neural_network [][]Neuron = nn();
 	printf("neural_network.len: %d\n".data, neural_network.len);
 
-	read_model("examples/softmax_mcnn/saved_models/model_checkpoint.bin", neural_network);
+	read_model("saved_models/model_checkpoint.bin", neural_network);
 		
 	:f_out ForwardOut = ForwardOut{
 		allocate(2 * 16),

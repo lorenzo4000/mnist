@@ -1,4 +1,4 @@
-@import "examples/softmax_mcnn/mt19937ar.myc"
+@import "mt19937ar.myc"
 
 // math.h
 function sqrt(:x f64) f64 external;

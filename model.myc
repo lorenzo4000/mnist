@@ -8,9 +8,9 @@
 
 */
 
-@import "lib/c/stdio.myc"
-@import "lib/memory.myc"
-@import "examples/softmax_mcnn/normal.myc"
+@import "c/stdio.myc"
+@import "memory.myc"
+@import "normal.myc"
 
 //  ssize_t read(int fd, void *buf, size_t count);
 function read(:fd int32, :buf *?, :count uint64) uint64 external;

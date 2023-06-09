@@ -1,0 +1,5 @@
+*.out
+*.s
+interactive
+test
+train

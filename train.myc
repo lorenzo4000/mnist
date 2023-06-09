@@ -1,4 +1,4 @@
-@import "examples/softmax_mcnn/model.myc"
+@import "model.myc"
 // *** raylib ***
 
 //
@@ -318,6 +318,6 @@ function main() {
 	
 		// end of epoch
 		// ** save checkpoint
-		save_model("examples/softmax_mcnn/saved_models/model_checkpoint.bin", neural_network);
+		save_model("saved_models/model_checkpoint.bin", neural_network);
 	}
 }
